@@ -2,7 +2,9 @@
 
 Code: https://github.com/soulslicer/lets-code-ik-from-scratch
 
-Here is a fun little weekend project. Lets work through a notebook to learn how to do IK from scratch! We will write a barebones IK (Inverse Kinematics) solver for multi-body trees for anyone to understand, while going through the math, code and logic step by step. We will keep it simple. No complex robot representations (URDF, MJCF etc.), no rigid body library to load them and compute derivatives (Mujoco, Pinnochio), no need for lie algrebra theory, and no IK libraries or solvers (OSQP). Just barebones python, numpy for the matrix math, and meshcat for the visualization. The goal is to be able to build something like what you see below, and dervive all the math from scratch with references! Before jumping into this, i highly recommend reading **Lets Code Least Squares From Scratch** [here](https://github.com/soulslicer/lets-code-ik-from-scratch/blob/main/LetsCodeLeastSquaresFromScratch.ipynb) to get you familiar with some of the math and visuals. Lets get started!
+Here is a fun little weekend project. Lets work through a notebook to learn how to do IK from scratch! We will write a barebones IK (Inverse Kinematics) solver for multi-body trees for anyone to understand, while going through the math, code and logic step by step. We will keep it simple. No complex robot representations (URDF, MJCF etc.), no rigid body library to load them and compute derivatives (Mujoco, Pinnochio), no need for lie algebra theory, and no IK libraries or solvers (OSQP). Just barebones python, numpy for the matrix math, and meshcat for the visualization. The goal is to be able to build something like what you see below, and derive all the math from scratch with references! 
+
+Begin here: [Link](https://github.com/soulslicer/lets-code-ik-from-scratch/blob/main/LetsCodeIKFromScratch.ipynb)
 
 ![intro](video.gif)
 
@@ -28,9 +30,8 @@ python two_arm_robot.py
 python human_arm_robot.py
 ```
 
-### Tutorials
+### Notebooks
 
 ```
 jupyter-notebook $PWD
-# Look at the two notebooks
 ```
