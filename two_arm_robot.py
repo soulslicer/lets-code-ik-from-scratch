@@ -88,7 +88,7 @@ for target_key, target_value in target_input.items():
     target_input[target_key] = 1.0
 
 # Run FK on that input
-robot.fk(target_input, {})
+robot.compute(target_input, {})
 
 # Get some target frames of the EFs
 target_output = robot.get_ef_frames_output()
@@ -100,7 +100,7 @@ target_output = robot.get_ef_frames_output()
 
 # Run a pass of IK on that 0 with target
 init_input = robot.get_joint_space_input()
-robot.fk(init_input, target_output, grad = True)
+robot.compute(init_input, target_output, grad = True)
 
 # Solve
 robot.vis["ef2_target"].set_transform(target_output["ef2"]["T"])
@@ -108,4 +108,4 @@ meshcat_shapes.frame(robot.vis["ef2_target"])
 robot.vis["ef3_target"].set_transform(target_output["ef3"]["T"])
 meshcat_shapes.frame(robot.vis["ef3_target"])
 time.sleep(1)
-sln, loss = robot.solve(init_input, target_output, solver = "LM", lr=0.1, viz = True)
+sln, loss = robot.solve(init_input, target_output, solver = "LM", lr=0.1, viz = True, viz_sleep=0.01)

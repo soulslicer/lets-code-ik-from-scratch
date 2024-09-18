@@ -64,7 +64,7 @@ robot = Robot(vis, double_pendulum_robot)
 # Setup a toy problem
 target_input = {"j0": np.pi/2 + 1.0, "j1": np.pi/2 + 0.5}
 print(target_input)
-robot.fk(target_input, {})
+robot.compute(target_input, {})
 t = robot.frames["ef"]["global_T"]
 w = np.zeros((4,4))
 w[0:3, 0:3] = 1

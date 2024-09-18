@@ -186,12 +186,12 @@ robot = Robot(vis, human_arm_robot)
 init_input = robot.get_joint_space_input()
 for target_key, target_value in init_input.items():
     init_input[target_key] = 0.5
-robot.fk(init_input, {}, False, True)
+robot.compute(init_input, {}, False, True)
 
 targets = {
     "left_ef": {"T": translation_matrix([0.5, -0.5, 0.25]), "w": weight_matrix(0, 5)},
     "right_ef": {"T": translation_matrix([0.5, 0.5, -0.25]), "w": weight_matrix(0, 5)},
-    #"base_yaw": {"range": [-0.75,0.75], "w": 5},
+    # "base_yaw": {"range": [-0.75,0.75], "w": 50},
 }
 robot.vis["left_ef_target"].set_transform(targets["left_ef"]["T"])
 meshcat_shapes.frame(robot.vis["left_ef_target"])
