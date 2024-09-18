@@ -10,7 +10,7 @@ import meshcat.geometry as g
 import meshcat.transformations as tf
 import meshcat_shapes
 
-from collections import OrderedDict
+from typing import List, Dict
 np.set_printoptions(suppress=True)
 
 
@@ -35,7 +35,7 @@ def translation_matrix(direction : np.array):
     return T
 
 
-def skew(v):
+def skew(v : np.array):
     """
     Given a 1x3 direction vector
     Returns a 3x3 skew symmetric matrix 
@@ -78,7 +78,7 @@ assert(np.linalg.norm(dThetadT_numerical - dThetadT_analytical) < 1e-5)
 
 
 # A method that returns 0 within range or the max val otherwise
-def joint_limit(x, range, max, skew=10., grad=False):
+def joint_limit(x : float, range : List[float], max : float, skew : float = 10., grad=False):
     """
     A method that returns 0 if x is within range or tends to max otherwise
     """
@@ -103,7 +103,7 @@ limit, dLimitdX_analytical = joint_limit(-2 + h, range=[-2,2], max=2., grad=True
 assert(np.linalg.norm(dLimitdX_numerical - dLimitdX_analytical) < 1e-5)
 
 
-def iterate_frames(frames, starting="base"):
+def iterate_frames(frames : Dict[str, Dict], starting : str = "base"):
     """
     A helper method to iterate a robot frame tree in a BFS manner so we always visit the parent before child
     """
@@ -122,7 +122,10 @@ def iterate_frames(frames, starting="base"):
 
 # Robot class
 class Robot:
-    def __init__(self, vis, rdf):
+    def __init__(self, vis : meshcat.Visualizer, rdf : Dict[str, Dict]):
+        """
+        Setup our robot class and visualization
+        """
         self.vis = vis
 
         # Setup robot definition
@@ -143,9 +146,12 @@ class Robot:
         
         # Get the robot to visualize the T pose
         inputs = self.get_joint_space_input()
-        self.fk(inputs, {}, False, True)
+        self.compute(inputs, {}, False, True)
 
     def get_joint_space_input(self):
+        """
+        Returns a sample T pose in joint space eg. {"j0" : 0, "j1" : 0}
+        """
         inputs = {}
         for curr_node, parent_node, _ in iterate_frames(self.frames):
             if curr_node["type"] == "joint":
@@ -153,13 +159,28 @@ class Robot:
         return inputs
     
     def get_ef_frames_output(self):
+        """
+        Returns a sample target output with all of the end effectors and their poses
+        """
         inputs = {}
         for curr_node, parent_node, _ in iterate_frames(self.frames):
             if curr_node["type"] == "ef":
                 inputs[curr_node["key"]] = {"T": curr_node["global_T"], "w": weight_matrix(1, 1)}
         return inputs
 
-    def solve(self, inputs, targets, solver = "LM", lr = 1.0, lm_damping = 0.0006, viz = False, cb = None, viz_sleep = 0.1, min_eps = 1e-6, max_iter = 1000):
+    def solve(
+        self, 
+        inputs : Dict[str, float], 
+        targets : Dict[str, Dict], 
+        solver = "LM", 
+        lr = 1.0, 
+        lm_damping = 0.0006, 
+        viz = False, 
+        cb = None, 
+        viz_sleep = 0.1, 
+        min_eps = 1e-6, 
+        max_iter = 1000
+    ):
         # Make a copy of current state vector
         inputs = copy.deepcopy(inputs)
         
@@ -168,7 +189,7 @@ class Robot:
         total_iter = 0
         while 1:
             # Compute IK
-            total_losses, total_grads, total_orderings = self.fk(inputs, targets, grad = True, viz = viz)
+            total_losses, total_grads, total_orderings = self.compute(inputs, targets, grad = True, viz = viz)
             # Compute optimal step with gauss newton
             step = None
             if solver == "GN":
@@ -209,12 +230,10 @@ class Robot:
 
         return inputs, prev_loss
 
-    def fk(self, inputs, targets, grad = False, viz = False):
-
-        ##########################################
-        # Compute FK
-        ##########################################
-
+    def fk(self, inputs : Dict[str, float], viz = False):
+        """
+        Given our joint space input eg. {"j0" : 0, "j1" : 0} we update self.frames with all of the frame global poses
+        """
         # Iterate FK chain
         for curr_node, parent_node, _ in iterate_frames(self.frames):
             curr_key = curr_node["key"]
@@ -232,10 +251,6 @@ class Robot:
             elif curr_node["type"] == "link" or curr_node["type"] == "ef":
                 curr_node["global_T"] = parent_node["global_T"] @ curr_node["offset_T"]
 
-        ##########################################
-        # Visualize FK frames
-        ##########################################
-
         # Draw frames
         if viz:
             for curr_node, parent_node, _ in iterate_frames(self.frames):
@@ -244,13 +259,12 @@ class Robot:
                 if curr_node["type"] == "ef":
                     meshcat_shapes.frame(self.vis[curr_key])
 
-        ##########################################
-        # Compute IK Jacobians
-        ##########################################
-
+    def ik(self, inputs : Dict[str, float]):
+        """
+        Given our joint space input eg. {"j0" : 0, "j1" : 0} we update self.frames with all of the frame jacobians
+        """
         # Iterate IK chain
         for j in inputs.keys():
-            if not grad: continue
 
             # Iterate FK chain
             for curr_node, parent_node, _ in iterate_frames(self.frames):
@@ -277,10 +291,12 @@ class Robot:
                     if j not in self.traj_cache[curr_key]:
                         curr_node["global_J_" + j] *= 0
 
-        ##########################################
-        # Compute Target Losses and Grads
-        ##########################################
 
+    def loss(self, inputs : Dict[str, float], targets : Dict[str, Dict], grad=False):
+        """
+        Given our joint space input eg. {"j0" : 0, "j1" : 0} and targets eg. {"ef": {"T": t, "w": w}, "j2": {"range": [-3,3], "w": 5}}
+        which could be the end effector targets and the joint limits, we return the losses, jacobians and order for optimization
+        """
         # Generate the ordering that we return losses and gradients with
         joint_orderings = []
         for input_key, _ in inputs.items():
@@ -337,6 +353,15 @@ class Robot:
 
         return total_losses, total_grads, joint_orderings
 
+    def compute(self, inputs : Dict[str, float], targets : Dict[str, Dict], grad = False, viz = False):
+        """
+        Given our joint space input eg. {"j0" : 0, "j1" : 0} and targets eg. {"ef": {"T": t, "w": w}, "j2": {"range": [-3,3], "w": 5}}
+        which could be the end effector targets and the joint limits, we return the losses, jacobians and order for optimization
+        """
+        self.fk(inputs, viz)
+        if grad: self.ik(inputs)
+        return self.loss(inputs, targets, grad)
+
     def setup_vis(self):
         for name, frame in self.frames.items():
             if frame["type"] == "base":
@@ -347,28 +372,3 @@ class Robot:
                 self.vis[name].set_object(g.Sphere(frame["dim"]))
             elif frame["type"] == "ef":
                 self.vis[name].set_object(g.Sphere(frame["dim"]))
-
-    def fk_m(self, inputs, targets):
-        base_transform = self.frames["base"]["offset_T"]
-        j1_T, j1_q1_grad = rotation_matrix(inputs["j1"], self.frames["j1"]["axis"], grad=True)
-        self.frames["j1"]["global_T"] = base_transform @ self.frames["j1"]["offset_T"] @ j1_T
-        self.frames["l1"]["global_T"] = self.frames["j1"]["global_T"]  @ self.frames["l1"]["offset_T"]
-        j2_T, j2_q2_grad = rotation_matrix(inputs["j2"], self.frames["j2"]["axis"], grad=True)
-        self.frames["j2"]["global_T"] = self.frames["l1"]["global_T"] @ self.frames["j2"]["offset_T"] @ j2_T
-        self.frames["l2"]["global_T"] = self.frames["j2"]["global_T"] @ self.frames["l2"]["offset_T"]
-        self.frames["ef"]["global_T"] = self.frames["l2"]["global_T"] @ self.frames["ef"]["offset_T"]
-        ef_frame = self.frames["ef"]["global_T"]
-
-        # Q1
-        j1_q1_grad = base_transform @ self.frames["j1"]["offset_T"] @ j1_q1_grad
-        l1_q1_grad = j1_q1_grad  @ self.frames["l1"]["offset_T"]
-        j2_q1_grad = l1_q1_grad @ self.frames["j2"]["offset_T"] @ j2_T
-        l2_q1_grad = j2_q1_grad @ self.frames["l2"]["offset_T"]
-        ef_q1_grad = l2_q1_grad @ self.frames["ef"]["offset_T"] 
-
-        # Q2
-        j1_q2_grad = base_transform @ self.frames["j1"]["offset_T"] @ j1_T
-        l1_q2_grad = j1_q2_grad  @ self.frames["l1"]["offset_T"]
-        j2_q2_grad = l1_q2_grad @ self.frames["j2"]["offset_T"] @ j2_q2_grad
-        l2_q2_grad = j2_q2_grad @ self.frames["l2"]["offset_T"]
-        ef_q2_grad = l2_q2_grad @ self.frames["ef"]["offset_T"]

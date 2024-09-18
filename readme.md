@@ -1,5 +1,36 @@
 ## Lets Code IK (Inverse Kinematics) from Scratch
 
-Having worked in the robotics space for a number of years, i've been quite unsatisfied with IK tutorials online, and have been wanting to write a barebones IK (Inverse Kinematics) solver for multi-body trees for anyone to understand. Basically, no complex robot representations (URDF, MJCF etc.), no rigid body library to load them and compute derivatives (Mujoco, Pinnochio), and no IK libraries or solvers. Just barebones python, numpy for the matrix math, and meshcat for the visualization. I also wanted to try to stay away from the abstraction that lie algebra offers, and try to derive most of the math ourselves even if it might be sub-optimal. The goal of this was to essentially be able to step through the math and code cell by cell. It's not going to be the best, but should be a good resource for college students or anyone wanting to brush up on their math.
+Code: https://github.com/soulslicer/lets-code-ik-from-scratch
 
-![image description](video.gif)
+Here is a fun little weekend project. Lets work through a notebook to learn how to do IK from scratch! We will write a barebones IK (Inverse Kinematics) solver for multi-body trees for anyone to understand, while going through the math, code and logic step by step. We will keep it simple. No complex robot representations (URDF, MJCF etc.), no rigid body library to load them and compute derivatives (Mujoco, Pinnochio), no need for lie algrebra theory, and no IK libraries or solvers (OSQP). Just barebones python, numpy for the matrix math, and meshcat for the visualization. The goal is to be able to build something like what you see below, and dervive all the math from scratch with references! Before jumping into this, i highly recommend reading **Lets Code Least Squares From Scratch** [here](https://github.com/soulslicer/lets-code-ik-from-scratch/blob/main/LetsCodeLeastSquaresFromScratch.ipynb) to get you familiar with some of the math and visuals. Lets get started!
+
+![intro](video.gif)
+
+### Requirements
+
+```
+pip install meshcat
+pip install meshcat-shapes
+pip install numpy
+pip install opencv-python
+pip install matplotlib
+pip install jupyter
+pip install jupyter-notebook
+pip install keyboard
+pip install pyinput
+```
+
+### Code examples
+
+```
+python dp_robot.py
+python two_arm_robot.py
+python human_arm_robot.py
+```
+
+### Tutorials
+
+```
+jupyter-notebook $PWD
+# Look at the two notebooks
+```
