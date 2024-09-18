@@ -1,0 +1,5 @@
+## Lets Code IK (Inverse Kinematics) from Scratch
+
+Having worked in the robotics space for a number of years, i've been quite unsatisfied with IK tutorials online, and have been wanting to write a barebones IK (Inverse Kinematics) solver for multi-body trees for anyone to understand. Basically, no complex robot representations (URDF, MJCF etc.), no rigid body library to load them and compute derivatives (Mujoco, Pinnochio), and no IK libraries or solvers. Just barebones python, numpy for the matrix math, and meshcat for the visualization. I also wanted to try to stay away from the abstraction that lie algebra offers, and try to derive most of the math ourselves even if it might be sub-optimal. The goal of this was to essentially be able to step through the math and code cell by cell. It's not going to be the best, but should be a good resource for college students or anyone wanting to brush up on their math.
+
+![image description](video.gif)
